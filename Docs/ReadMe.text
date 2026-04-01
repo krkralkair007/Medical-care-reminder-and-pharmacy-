@@ -1,47 +1,20 @@
-What will your software do?     -> It will provide a medical application that combines a pharmacy and doctor services in one place.
- It is designed to help people who cannot afford or access hospitals by giving them easier healthcare support.
+# Medical care reminder and pharmacy
 
-What features will it have?      ->      The application will have four main features:
+## Team Details
 
-AI Chat for recognizing symptoms
-
-Doctor Meets for connecting with doctors
-
-Ordering Medicine
-
-Medicine Reminder
-
-It will also focus on good UI and UX.
-
-How will it be executed?      ->
-It will be developed using Python and multiple database languages. We have already started building a working API. The project is part of our Software Architecture course.
+| Name | Student ID | GitHub Username |
+| :--- | :--- | :--- |
+| Mohammad Alnajjar | 220513533 | Mohammad-Alnajjar4 |
+| ABDULRAHMAN Abdullah | 220513400 | ff7hpp |
+| MOHAMMED ALSALAHI | 240170383 | MO3CODE |
+| Mohammed Alfakih | 220513101 | malfakih1 |
+| AL khair Makeen | 220513434 | |
 
 
-What new skills will you need to acquire?      ->
-We need to improve our skills in Python, databases, API development, AI chat systems, and UI/UX design.
+## Project Introduction
 
+Many people struggle to access medical care due to financial or physical limitations. To solve this, our application combines AI symptom checking, telemedicine, pharmacy orders, and medication reminders into a single, easy-to-use platform. Our ultimate goal is to create a practical system that truly helps people and makes healthcare more accessible for everyone.
 
-What topics will you need to research?      ->
-We will research AI symptom recognition, database integration, API design, and software architecture concepts.
+## Architecture Link
 
-
-In you team, who will do what?       ->
-
-One student will handle the system architecture.
-
-One will work on backend and API.
-
-One will manage databases.
-
-One will design the UI/UX.
-
-One will handle testing and quality assurance.
-
-
-What might you consider to be a good outcome for your project? A better outcome? The best outcome?->
-
-Good outcome: A working application with all main features.
-
-Better outcome: A stable and user-friendly system.
-
-Best outcome: A complete application that truly helps people and has potential to grow in the future.
+[View the Software Architecture Documentation](ARCHITECTURE.md)
