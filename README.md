@@ -8,7 +8,7 @@
 | ABDULRAHMAN Abdullah | 220513400 | ff7hpp |
 | MOHAMMED ALSALAHI | 240170383 | MO3CODE |
 | Mohammed Alfakih | 220513101 | malfakih1 |
-| AL khair Makeen | 220513434 | krkralkair007 | 
+| ALkhair Makeen Ahmed | 220513434 | krkralkair007 | 
 
 
 ## Project Introduction
