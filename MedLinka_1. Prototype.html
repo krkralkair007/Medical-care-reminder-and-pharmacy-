@@ -786,37 +786,36 @@ body {
 @keyframes slideUp { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
 @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
-/* ── ANTIGRAVITY — classes applied by antigravityInit() ── */
-/**
- * Senior Developer Documentation:
- * Defines independent animation keyframes to create a cohesive zero-gravity effect.
- * Separation of float speeds (slow, fast, normal) allows for staggered, organic visual rhythms
- * without relying on heavy JS-based loop updates.
- */
-@keyframes ag-float     { 0%,100%{transform:translateY(0px)}                          50%{transform:translateY(-12px)} }
-@keyframes ag-floatSlow { 0%,100%{transform:translateY(0px) rotate(-1deg)}             50%{transform:translateY(-8px) rotate(1deg)} }
-@keyframes ag-floatFast { 0%,100%{transform:translateY(0px) scale(1)}                  50%{transform:translateY(-16px) scale(1.03)} }
-@keyframes ag-orb       { 0%{transform:translateY(0) translateX(0);opacity:0.18}
-                          33%{transform:translateY(-22px) translateX(8px);opacity:0.28}
-                          66%{transform:translateY(-10px) translateX(-6px);opacity:0.22}
-                         100%{transform:translateY(0) translateX(0);opacity:0.18} }
+/* ── ANTIGRAVITY — pure CSS, triggered by data-ag attributes ── */
+@keyframes ag-float     { 0%,100%{transform:translateY(0px)}              50%{transform:translateY(-12px)} }
+@keyframes ag-floatSlow { 0%,100%{transform:translateY(0px) rotate(-1deg)} 50%{transform:translateY(-8px) rotate(1deg)} }
+@keyframes ag-floatFast { 0%,100%{transform:translateY(0px) scale(1)}      50%{transform:translateY(-16px) scale(1.03)} }
+@keyframes ag-orb-pulse { 0%,100%{transform:translateY(0) translateX(0);opacity:0.16} 50%{transform:translateY(-18px) translateX(6px);opacity:0.26} }
 
-/**
- * Assigns keyframes to modular utility classes.
- * We utilize CSS variables like var(--ag-dur) so JavaScript can inject unique durations
- * dynamically per-element, keeping our stylesheets strictly DRY.
- */
-.ag-float   { animation: ag-float     var(--ag-dur, 3.2s) ease-in-out infinite; }
-.ag-float-s { animation: ag-floatSlow var(--ag-dur, 4.5s) ease-in-out infinite; }
-.ag-float-f { animation: ag-floatFast var(--ag-dur, 2.6s) ease-in-out infinite; }
+[data-ag="float"]      { animation: ag-float     3.4s ease-in-out infinite; }
+[data-ag="float-slow"] { animation: ag-floatSlow 4.6s ease-in-out infinite; }
+[data-ag="float-fast"] { animation: ag-floatFast 2.7s ease-in-out infinite; }
 
-/**
- * Base styling for dynamically injected floating orbs.
- * pointer-events: none ensures they sit in the background and don't block user interactions.
- */
-.ag-orb {
-  position: absolute; border-radius: 50%; pointer-events: none; z-index: 0;
-  animation: ag-orb var(--ag-orb-dur, 5s) ease-in-out infinite;
+[data-ag-delay="200"]  { animation-delay: 200ms; }
+[data-ag-delay="400"]  { animation-delay: 400ms; }
+[data-ag-delay="600"]  { animation-delay: 600ms; }
+[data-ag-delay="800"]  { animation-delay: 800ms; }
+[data-ag-delay="1000"] { animation-delay: 1000ms; }
+
+#screen-onboarding::before,
+#screen-onboarding::after {
+  content: ''; position: absolute; border-radius: 50%; pointer-events: none; z-index: 0;
+  animation: ag-orb-pulse ease-in-out infinite;
+}
+#screen-onboarding::before {
+  width: 90px; height: 90px; top: 10%; left: 6%;
+  background: rgba(255,255,255,0.11);
+  animation-duration: 6s;
+}
+#screen-onboarding::after {
+  width: 52px; height: 52px; top: 62%; left: 76%;
+  background: rgba(18,160,144,0.20);
+  animation-duration: 4.5s; animation-delay: 1.1s;
 }
 
 .screen.active { animation: fadeIn 0.25s ease; }
@@ -877,21 +876,21 @@ body {
         <span class="status-time">9:41</span>
         <div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div>
       </div>
-      <div class="onboard-circle">🏥</div>
-      <div class="onboard-name" data-i18n="appName">MedLinka</div>
-      <p class="onboard-tag" data-i18n="appTag">Your all-in-one healthcare platform.<br>AI diagnosis · Doctors · Pharmacy · Reminders</p>
-      <div class="feature-pills">
+      <div class="onboard-circle" data-ag="float-fast">🏥</div>
+      <div class="onboard-name" data-i18n="appName" data-ag="float-slow" data-ag-delay="200">MedLinka</div>
+      <p class="onboard-tag" data-i18n="appTag" data-ag="float" data-ag-delay="400">Your all-in-one healthcare platform.<br>AI diagnosis · Doctors · Pharmacy · Reminders</p>
+      <div class="feature-pills" data-ag="float-slow" data-ag-delay="600">
         <span class="fpill" data-i18n="feat1">🤖 AI Assistant</span>
         <span class="fpill" data-i18n="feat2">👨‍⚕️ Doctors</span>
         <span class="fpill" data-i18n="feat3">💊 Pharmacy</span>
         <span class="fpill" data-i18n="feat4">⏰ Reminders</span>
       </div>
-      <div class="onboard-quick" onclick="triggerAI()">
+      <div class="onboard-quick" onclick="triggerAI()" data-ag="float" data-ag-delay="800">
         <span style="font-size:20px">🤖</span>
         <input id="landingInput" data-i18n-placeholder="aiPlaceholder" placeholder="Describe your symptoms…" />
         <span style="color:rgba(255,255,255,0.6);font-size:18px">➤</span>
       </div>
-      <div class="onboard-btns">
+      <div class="onboard-btns" data-ag="float-slow" data-ag-delay="1000">
         <button class="btn-white" onclick="goAuth('register')" data-i18n="createAccount">Create Free Account</button>
         <button class="btn-ghost" onclick="goAuth('login')" data-i18n="signIn">Sign In</button>
       </div>
