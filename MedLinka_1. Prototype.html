@@ -786,6 +786,39 @@ body {
 @keyframes slideUp { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
 @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
+/* ── ANTIGRAVITY — classes applied by antigravityInit() ── */
+/**
+ * Senior Developer Documentation:
+ * Defines independent animation keyframes to create a cohesive zero-gravity effect.
+ * Separation of float speeds (slow, fast, normal) allows for staggered, organic visual rhythms
+ * without relying on heavy JS-based loop updates.
+ */
+@keyframes ag-float     { 0%,100%{transform:translateY(0px)}                          50%{transform:translateY(-12px)} }
+@keyframes ag-floatSlow { 0%,100%{transform:translateY(0px) rotate(-1deg)}             50%{transform:translateY(-8px) rotate(1deg)} }
+@keyframes ag-floatFast { 0%,100%{transform:translateY(0px) scale(1)}                  50%{transform:translateY(-16px) scale(1.03)} }
+@keyframes ag-orb       { 0%{transform:translateY(0) translateX(0);opacity:0.18}
+                          33%{transform:translateY(-22px) translateX(8px);opacity:0.28}
+                          66%{transform:translateY(-10px) translateX(-6px);opacity:0.22}
+                         100%{transform:translateY(0) translateX(0);opacity:0.18} }
+
+/**
+ * Assigns keyframes to modular utility classes.
+ * We utilize CSS variables like var(--ag-dur) so JavaScript can inject unique durations
+ * dynamically per-element, keeping our stylesheets strictly DRY.
+ */
+.ag-float   { animation: ag-float     var(--ag-dur, 3.2s) ease-in-out infinite; }
+.ag-float-s { animation: ag-floatSlow var(--ag-dur, 4.5s) ease-in-out infinite; }
+.ag-float-f { animation: ag-floatFast var(--ag-dur, 2.6s) ease-in-out infinite; }
+
+/**
+ * Base styling for dynamically injected floating orbs.
+ * pointer-events: none ensures they sit in the background and don't block user interactions.
+ */
+.ag-orb {
+  position: absolute; border-radius: 50%; pointer-events: none; z-index: 0;
+  animation: ag-orb var(--ag-orb-dur, 5s) ease-in-out infinite;
+}
+
 .screen.active { animation: fadeIn 0.25s ease; }
 
 /* RTL for Arabic */
@@ -1793,10 +1826,75 @@ function showToast(msg, type = 'success') {
 }
 
 // ══════════════════════════════════════
+// ANTIGRAVITY — onboarding float engine
+// ══════════════════════════════════════
+/**
+ * Configuration registry for UI element float animations.
+ * Centralizing this data away from the DOM allows for easy scalable tweaking
+ * of element selectors, target CSS classes, staggered delays, and durations.
+ * Structure: [ selector, CSS class, delay(ms), duration(s) ]
+ */
+const AG_CONFIG = [
+  ['#screen-onboarding .onboard-circle', 'ag-float-f', 0,    2.8],
+  ['#screen-onboarding .onboard-name',   'ag-float-s', 200,  4.2],
+  ['#screen-onboarding .onboard-tag',    'ag-float',   400,  3.5],
+  ['#screen-onboarding .feature-pills',  'ag-float-s', 600,  4.8],
+  ['#screen-onboarding .onboard-quick',  'ag-float',   800,  3.1],
+  ['#screen-onboarding .onboard-btns',   'ag-float-s', 1000, 3.9],
+];
+
+/**
+ * Array definition matrix for randomized ambient orbs. 
+ * Processing these dynamically prevents bloating the static HTML template
+ * while keeping layout styling and placement logic data-driven.
+ */
+const AG_ORBS = [
+  { size:80,  top:'12%', left:'8%',  color:'rgba(255,255,255,0.12)', dur:6.2, delay:0    },
+  { size:50,  top:'60%', left:'78%', color:'rgba(18,160,144,0.22)',  dur:4.8, delay:1200 },
+  { size:34,  top:'80%', left:'14%', color:'rgba(255,255,255,0.08)', dur:5.5, delay:600  },
+  { size:22,  top:'30%', left:'88%', color:'rgba(255,255,255,0.15)', dur:3.8, delay:900  },
+];
+
+/**
+ * Orchestrates the Antigravity engine upon application startup.
+ * 1. Injects ambient orb divs asynchronously representing our abstract background.
+ * 2. Processes configured UI nodes by injecting staggered CSS classes/delays.
+ * Creating a robust waterfall animation effect synchronously with our layout.
+ */
+function antigravityInit() {
+  const screen = document.getElementById('screen-onboarding');
+  if (!screen) return;
+
+  // Evaluate & inject ambient orbs into the DOM
+  AG_ORBS.forEach(o => {
+    const orb = document.createElement('div');
+    orb.className = 'ag-orb';
+    orb.style.cssText = [
+      `width:${o.size}px`, `height:${o.size}px`,
+      `top:${o.top}`, `left:${o.left}`,
+      `background:${o.color}`,
+      `--ag-orb-dur:${o.dur}s`,
+      `animation-delay:${o.delay}ms`,
+    ].join(';');
+    screen.appendChild(orb);
+  });
+
+  // Apply float classes with staggered setTimeout logic for high impact presentation
+  AG_CONFIG.forEach(([sel, cls, delay, dur]) => {
+    const el = document.querySelector(sel);
+    if (!el) return;
+    el.style.setProperty('--ag-dur', dur + 's');
+    el.style.animationDelay = delay + 'ms';
+    setTimeout(() => el.classList.add(cls), delay);
+  });
+}
+
+// ══════════════════════════════════════
 // INIT
 // ══════════════════════════════════════
 applyI18n();
 document.getElementById('bookDate').min = new Date().toISOString().split('T')[0];
+antigravityInit(); // ← Initializes the floating engine sequence
 </script>
 </body>
 </html>
