@@ -131,13 +131,61 @@ The logical view describes the object-oriented decomposition of MedLinka, organi
 - `Order` contains many `OrderItem`s.
 - `OrderItem` generates exactly one `ReminderSchedule`.
 
+---
+
+### 5.3 Database Schema Diagram (ERD)
+
+> Shows all core entities, their fields, and how they relate to each other.
+
+```
++------------------+         +---------------------+         +------------------+
+|      doctors     |         |    appointments     |         |     patients     |
++------------------+         +---------------------+         +------------------+
+| PK  id (INT)     |<--------| FK  doctor_id (INT) |-------->| PK  id (INT)     |
+|     name (TEXT)  |         | FK  patient_id(INT) |         |     name (TEXT)  |
+|     specialty    |         | PK  id (INT)        |         |     age (INT)    |
++------------------+         |     appointment_date|         +------------------+
+                             |     status (TEXT)   |
+                             |     (default:pending)|
+                             +---------------------+
+
++------------------+         +---------------------+         +---------------------+
+|      users       |         |   triage_sessions   |         |     ai_advice       |
++------------------+         +---------------------+         +---------------------+
+| PK  id (INT)     |<--------| FK  user_id (INT)   |-------->| FK  session_id(INT) |
+|     name (TEXT)  |         | PK  id (INT)        |         | PK  id (INT)        |
+|     role (TEXT)  |         |     created_at      |         |     gemini_output   |
+|     language     |         +---------------------+         |     disclaimer      |
++------------------+                                         +---------------------+
+
++------------------+         +---------------------+         +---------------------+
+|    medicines     |         |       orders        |         |   order_items       |
++------------------+         +---------------------+         +---------------------+
+| PK  id (INT)     |         | PK  id (INT)        |<--------| FK  order_id (INT)  |
+|     name (TEXT)  |         | FK  patient_id(INT) |         | FK  medicine_id(INT)|
+|     dosage(TEXT) |         |     status (TEXT)   |         | PK  id (INT)        |
+|     stock (INT)  |         +---------------------+         |     dosage_instr.   |
++------------------+                                         +---------------------+
+         ^                                                            |
+         |                                                            v
+         |                                         +---------------------+
+         +-------[FK medicine_id]------------------| reminder_schedules  |
+                                                   +---------------------+
+                                                   | PK  id (INT)        |
+                                                   | FK  order_item_id   |
+                                                   |     remind_at (TEXT)|
+                                                   +---------------------+
+```
+
+---
+
 ## 6. Process View
 
 > **Reader:** System integrators and performance engineers.
 
 ### 6.1 Process Flow and Concurrency
 
-MedLinka utilizes Python's asynchronous ecosystem (ASGI/Uvicorn) to handle high concurrency without the overhead of heavy threads. 
+MedLinka utilizes Python's asynchronous ecosystem (ASGI/Uvicorn) to handle high concurrency without the overhead of heavy threads.
 
 **Flow A — AI Triage (Synchronous API with Async I/O)**
 1. Mobile App sends `POST /api/v1/ai/chat` with symptom text and `Accept-Language` header.
@@ -152,10 +200,63 @@ MedLinka utilizes Python's asynchronous ecosystem (ASGI/Uvicorn) to handle high 
 4. The API immediately returns a success response to the patient.
 5. In the background, the server schedules the notification logic.
 
-### 6.2 Fault Tolerance
+---
+
+### 6.2 Process Flow Diagrams
+
+**Flow A — AI Triage Request**
+
+```
+  Mobile App                  FastAPI Server               Gemini API
+      |                            |                            |
+      |-- POST /api/v1/ai/chat --->|                            |
+      |   (symptoms + language)    |                            |
+      |                            |-- Validate JWT token       |
+      |                            |-- await AI call ---------->|
+      |                            |                            |-- Process prompt
+      |                            |                            |-- Return response
+      |                            |<-- AI response ------------|
+      |                            |-- Inject language disclaimer
+      |<-- Localized AI advice ----|
+      |                            |
+```
+
+**Flow B — Order Checkout & Background Reminders**
+
+```
+  Mobile App                  FastAPI Server               SQLite DB         Background Worker
+      |                            |                            |                    |
+      |-- POST /api/v1/orders ---->|                            |                    |
+      |                            |-- Validate stock --------->|                    |
+      |                            |<-- Stock confirmed --------|                    |
+      |                            |-- Write Order to DB ------>|                    |
+      |                            |-- Dispatch BackgroundTask ---------------------->|
+      |<-- 200 Success response ---|                            |                    |
+      |                            |                            |     Schedule reminders
+      |                            |                            |     from OrderItem
+      |                            |                            |<-- Save ReminderSchedule
+```
+
+**Flow C — Doctor Booking**
+
+```
+  Mobile App                  FastAPI Server               SQLite DB
+      |                            |                            |
+      |-- GET /api/v1/doctors ---->|                            |
+      |<-- List of doctors --------|-- SELECT * FROM doctors -->|
+      |                            |                            |
+      |-- POST /api/v1/appointments|                            |
+      |   (doctor_id, date)        |-- Validate doctor exists ->|
+      |                            |-- Validate patient exists->|
+      |                            |-- INSERT appointment ----->|
+      |<-- 201 Appointment booked--|                            |
+```
+
+---
+
+### 6.3 Fault Tolerance
 - **AI Failure:** If Gemini times out, the backend catches the exception and returns a localized standard error ("AI unavailable, please consult a doctor").
 - **Database Locks:** SQLite handles concurrent reads well, but writes are sequential. FastAPI's async ORM interactions ensure the event loop is not blocked during I/O.
-
 
 ---
 
@@ -209,6 +310,104 @@ The current environment is containerized using Docker Compose for seamless local
 
 **External Dependencies:**
 - **Gemini API:** Accessed via outbound HTTPS from the `backend` container.
+
+---
+
+### 8.2 System Architecture Diagram
+
+> Shows how all physical nodes, containers, and external services connect to each other.
+
+```
++-------------------------------------------------------+
+|                     USER DEVICES                      |
+|                                                       |
+|  +---------------------+   +----------------------+  |
+|  |   Mobile App        |   |   Web Dashboard      |  |
+|  |  (React Native/Expo)|   |  (React + Vite)      |  |
+|  |  iOS / Android      |   |  Doctor / Pharmacy   |  |
+|  +----------+----------+   +-----------+----------+  |
+|             |                          |              |
++-------------|--------------------------|---------------+
+              |     HTTP / REST          |
+              |    /api/v1/...           |
+              v                          v
++-------------------------------------------------------+
+|              DOCKER COMPOSE ENVIRONMENT               |
+|                                                       |
+|  +---------------------------------------------+     |
+|  |         backend container                   |     |
+|  |         Python 3.11 + FastAPI + Uvicorn     |     |
+|  |         PORT: 8000                          |     |
+|  |                                             |     |
+|  |  +------------+  +------------+             |     |
+|  |  | auth router|  | ai router  |             |     |
+|  |  +------------+  +------+-----+             |     |
+|  |  +------------+  +------+-----+             |     |
+|  |  | appt router|  |pharmacy    |             |     |
+|  |  +------------+  |router      |             |     |
+|  |  +---------------------------++             |     |
+|  |  | reminders router (BG task) |             |     |
+|  |  +----------------------------+             |     |
+|  +--------------------+------------------------+     |
+|                       |                              |
+|                       | SQL Queries                  |
+|                       v                              |
+|  +---------------------------------------------+     |
+|  |         database (SQLite volume)            |     |
+|  |         database.db (mounted)               |     |
+|  |                                             |     |
+|  |   [users] [doctors] [patients]              |     |
+|  |   [appointments] [orders]                   |     |
+|  |   [medicines] [reminders]                   |     |
+|  +---------------------------------------------+     |
+|                                                       |
++-------------------------------------------------------+
+              |
+              | HTTPS (outbound)
+              v
++---------------------------+
+|      Gemini API           |
+|   (Google Cloud)          |
+|   Multilingual AI         |
+|   Symptom Processing      |
++---------------------------+
+```
+
+### 8.3 API Endpoints Map
+
+> A full map of all exposed REST endpoints and their purpose.
+
+```
+BASE URL: http://localhost:8000/api/v1/
+
+Authentication
+  POST   /auth/register          --> Register new user
+  POST   /auth/login             --> Login, receive JWT token
+
+Doctors
+  GET    /doctors                --> List all doctors
+  GET    /doctors/<id>           --> Get single doctor by ID
+
+Patients
+  GET    /patients               --> List all patients
+  GET    /patients/<id>          --> Get single patient by ID
+
+Appointments
+  GET    /appointments           --> List all appointments (with names)
+  GET    /appointments/<id>      --> Get single appointment by ID
+  POST   /appointments           --> Book a new appointment
+                                     Body: { patient_id, doctor_id, appointment_date }
+
+Pharmacy
+  GET    /pharmacy/medicines     --> Browse medicine catalogue
+  POST   /orders                 --> Submit a cart / place an order
+
+AI Triage
+  POST   /ai/chat                --> Send symptoms, receive AI advice
+                                     Header: Accept-Language: ar | en | tr
+```
+
+---
 
 ## 9. Scenarios
 
