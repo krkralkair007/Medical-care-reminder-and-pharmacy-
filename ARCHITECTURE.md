@@ -20,7 +20,7 @@
 4. Architectural Goals and Constraints
 5. Logical View
 
-*(Sections 6-11 and Appendices available in Part 2)*
+
 
 ---
 
