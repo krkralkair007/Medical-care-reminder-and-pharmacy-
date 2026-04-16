@@ -205,21 +205,7 @@ MedLinka utilizes Python's asynchronous ecosystem (ASGI/Uvicorn) to handle high 
 ### 6.2 Process Flow Diagrams
 
 **Flow A — AI Triage Request**
-
-```
-  Mobile App                  FastAPI Server               Gemini API
-      |                            |                            |
-      |-- POST /api/v1/ai/chat --->|                            |
-      |   (symptoms + language)    |                            |
-      |                            |-- Validate JWT token       |
-      |                            |-- await AI call ---------->|
-      |                            |                            |-- Process prompt
-      |                            |                            |-- Return response
-      |                            |<-- AI response ------------|
-      |                            |-- Inject language disclaimer
-      |<-- Localized AI advice ----|
-      |                            |
-```
+![flow A](https://github.com/malfakih1/Medical-care-reminder-and-pharmacy-/blob/21eacafca656ba25723a9441e6c6328976fee143/flow_triage.png)
 
 **Flow B — Order Checkout & Background Reminders**
 
